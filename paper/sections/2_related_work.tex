@@ -1,0 +1,55 @@
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Masking augmentations.}
+Cutout~\citep{devries2017cutout} removes a fixed-size square at a random
+location and was among the first to show that occluding contiguous regions acts
+as an effective regulariser.  Random Erasing~\citep{zhong2020randomerasing}
+generalises this to rectangles of random aspect ratio and area, optionally
+filled with noise or the dataset mean.  Both choose the masked region without
+regard to image content.  ICD can be viewed as a content-aware Cutout: the
+shape of the occlusion follows the model's saliency rather than a random box,
+and the special case of solid zero-fill on the high-saliency tiles recovers a
+saliency-targeted form of classical Cutout.  CutMix~\citep{yun2019cutmix}
+replaces a region with a patch from a second image and mixes the labels
+accordingly; unlike CutMix, ICD and AICD are single-image operations and leave
+the label unchanged.
+
+\paragraph{Saliency-aware augmentation.}
+The closest line of work conditions augmentation on a saliency or attention
+signal.  KeepAugment~\citep{gong2021keepaugment} computes a saliency map and
+\emph{preserves} the most important region, restricting augmentation to the
+remainder, with the goal of not destroying discriminative information.  ICD
+adopts the opposite stance: it deliberately occludes the high-saliency region
+to discourage over-reliance on it, while AICD occupies the same regime as
+KeepAugment by perturbing only the low-saliency background.  The two methods
+thus bracket the design space that KeepAugment occupies on one side.  Other
+saliency-driven approaches operate through mixing rather than dropout:
+SaliencyMix~\citep{uddin2021saliencymix} uses a saliency map to choose the
+source patch in a CutMix-style operation, and SnapMix~\citep{huang2021snapmix}
+uses class activation maps to assign mixed-label proportions in fine-grained
+recognition.  These methods require a second image and modify the target;
+ICD and AICD do neither.
+
+\paragraph{Class activation maps.}
+ICD and AICD rely on a saliency map to score image regions.  We use
+GradCAM~\citep{selvaraju2017gradcam}, which weights the activations of a target
+convolutional layer by the gradient of the predicted class score and produces a
+coarse localisation map.  Numerous refinements exist, including
+GradCAM\texttt{++}~\citep{chattopadhay2018gradcampp} for improved localisation
+of multiple instances and gradient-free variants such as
+EigenCAM~\citep{muhammad2020eigencam}, and any of these may in principle drive
+the masking.  Our reference implementation builds on the
+\texttt{pytorch-grad-cam} library~\citep{gildenblat2021gradcam}, which unifies
+these methods behind a common interface.
+
+\paragraph{Automated augmentation policies.}
+A parallel body of work searches for augmentation policies rather than
+conditioning on the model state.  AutoAugment~\citep{cubuk2019autoaugment}
+learns a policy by reinforcement learning;
+RandAugment~\citep{cubuk2020randaugment} reduces the search to two scalar
+hyperparameters; and TrivialAugment~\citep{muller2021trivialaugment} dispenses
+with search entirely, sampling a single transformation per image uniformly.
+These methods are complementary to ICD and AICD: they define \emph{which}
+photometric or geometric transformation to apply, whereas ICD and AICD define
+\emph{where} to apply a content-aware occlusion.  The two can be composed.

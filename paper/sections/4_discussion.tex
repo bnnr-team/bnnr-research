@@ -1,0 +1,88 @@
+\section{Discussion}
+\label{sec:discussion}
+
+We motivate ICD and AICD through two distinct mechanisms, and then note the
+assumptions and costs that the construction carries.
+
+\subsection{ICD as model-adaptive difficulty}
+\label{sec:discussion:icd}
+
+ICD removes exactly the evidence the model currently finds most convincing.
+Consider a classifier that has settled on a single dominant cue, such as a dog's
+face or a flower's centre.  Under ICD it repeatedly encounters that cue occluded
+and must predict from what remains.  This is a form of difficulty that adapts to the
+model rather than to the data: the same image presents a harder problem to a
+network that relies narrowly on one region than to one that already integrates
+several.  The mechanism is related to the motivation of
+curriculum learning~\citep{bengio2009curriculum}, with the ordering inverted.
+Where a curriculum presents easy examples first and hard examples later, ICD
+holds the data fixed and instead removes, at each step, whatever the model has
+found easy.  The target it removes therefore moves, defined by the model's own
+saliency.  Because the
+saliency in Eq.~\eqref{eq:gradcam} is recomputed from the current parameters,
+the occlusion follows the representation as it develops rather than being fixed
+in advance.
+
+\subsection{AICD as background suppression}
+\label{sec:discussion:aicd}
+
+AICD addresses the complementary failure mode.  In many natural datasets the
+background is statistically informative: water co-occurs with certain animals,
+indoor scenes with certain objects~\citep{beery2018recognition}.  A model can
+exploit this without ever attending to the object, and such reliance is
+invisible to validation accuracy when the validation set shares the same
+background statistics.  AICD masks precisely the low-saliency region, which is
+the background once the model has localised the object, and perturbs it
+with a fill.  Repeatedly altering the background while preserving the object
+discourages the classifier from treating background as evidence, in the spirit
+of work that removes or randomises background to test and improve object-level
+reliance~\citep{xiao2021noise}.
+
+\subsection{Expected effect on saliency}
+\label{sec:discussion:saliency}
+
+Both methods act on the saliency map and may, in turn, reshape it.  Suppressing
+the high-saliency region (ICD) should discourage the concentration of saliency
+on any single area, so we would expect a model trained with ICD to develop a
+more distributed saliency map; suppressing the background (AICD) should, if it
+succeeds, sharpen saliency onto the object.  These expectations are stated here
+as hypotheses.  Quantitative measures such as the fraction of saliency mass on
+the image border, the coverage above a threshold, and the Gini concentration of
+the map can make them testable, and we take up that measurement in the companion
+study rather than claiming any outcome here.
+
+\subsection{Assumptions and limitations}
+\label{sec:discussion:limits}
+
+The construction rests on several assumptions that bound its applicability.
+
+\paragraph{Saliency must be meaningful.}
+ICD and AICD are only as good as the saliency map that drives them.  At
+initialisation, before the network has learned useful features, the GradCAM map
+is close to uninformative, and masking by it approaches random masking.  The
+methods are therefore best applied once the model has partially trained, or with
+saliency computed from a warmed-up checkpoint; applying them from the first step
+is unlikely to differ from Cutout.
+
+\paragraph{Online cost.}
+Unlike dataset-level augmentations that can be precomputed, the saliency in
+Eq.~\eqref{eq:gradcam} depends on the current parameters and in principle must
+be recomputed as training proceeds.  A gradient evaluation per image per update
+is expensive.  Section~\ref{sec:implementation} describes the caching strategy
+we use to amortise this, but the cache trades freshness for speed: a cached map
+reflects the model at the time of caching, not the current step.
+
+\paragraph{Tile granularity.}
+The tile size $t$ is a fixed grid imposed on a continuous saliency map.  A small
+$t$ can mask fine object parts that happen to be salient; a large $t$ can mask
+substantial background along with the object.  The appropriate $t$ depends on
+the object scale relative to the image, which the method does not adapt
+automatically.
+
+\paragraph{Single-image, single-label scope.}
+ICD and AICD operate on one image and leave the label unchanged, which keeps
+them simple and composable but also means they do not exploit the label-mixing
+that benefits methods such as CutMix~\citep{yun2019cutmix} and
+SnapMix~\citep{huang2021snapmix}.  The construction as presented is specific to
+classification; extending the tile-scoring step to detection or segmentation,
+where saliency is defined per region or per pixel, is left to future work.

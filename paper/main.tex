@@ -1,0 +1,81 @@
+% ICD and AICD: Saliency-Guided Masking Augmentation for Visual Classifiers
+% Mateusz Walo, Lublin University of Technology
+%
+% Compile with:
+%   pdflatex main && bibtex main && pdflatex main && pdflatex main
+%
+% Style: NeurIPS 2024 (download neurips_2024.sty from https://neurips.cc)
+% Fallback: comment \usepackage{neurips_2024} and use \documentclass{article}
+
+\documentclass{article}
+
+% ---- NeurIPS style (comment out if unavailable) ----
+% \usepackage{neurips_2024}
+
+% ---- Packages ----
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{placeins}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{geometry}
+\usepackage{verbatim}
+
+\geometry{
+  a4paper,
+  left=2.5cm, right=2.5cm,
+  top=2.5cm,  bottom=2.5cm,
+}
+
+% ---- Notation macros ----
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\1}{\mathbf{1}}
+\newcommand{\ie}{\textit{i.e.}}
+\newcommand{\eg}{\textit{e.g.}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+% ---- Title ----
+\title{Intelligent Coarse Dropout and Anti-ICD:\\Saliency-Guided Masking Augmentation for Visual Classifiers}
+
+\author{%
+  Mateusz Walo\\[4pt]
+  \normalsize Department of Applied Mathematics,
+  Faculty of Mathematics and Information Technology,\\
+  \normalsize Lublin University of Technology,
+  ul.~Nadbystrzycka~38, 20-618 Lublin, Poland\\
+  \normalsize \texttt{mateusz.walo.datascience@gmail.com}
+}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\input{sections/0_abstract}
+\end{abstract}
+
+\input{sections/1_introduction}
+\input{sections/2_related_work}
+\input{sections/3_method}
+\input{sections/4_discussion}
+\input{sections/5_implementation}
+\input{sections/6_conclusion}
+
+\bibliographystyle{abbrvnat}
+\bibliography{refs}
+
+\end{document}

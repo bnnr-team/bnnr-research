@@ -1,0 +1,27 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We have presented Intelligent Coarse Dropout (ICD) and Anti-ICD (AICD), two
+augmentation methods that turn a GradCAM saliency map into a tile-based
+occlusion mask.  ICD masks the tiles the model finds most salient, removing the
+evidence it currently relies on; AICD masks the least salient tiles, perturbing
+the background while leaving the discriminative region intact.  The two are
+governed by a single percentile threshold that selects them as opposite
+directions of the same construction and fixes their occlusion area to a common
+fraction.  Masked tiles are replaced by one of several soft fills rather than a
+hard box, and the masking operates at a coarse tile granularity that tempers the
+noise of pixel-level saliency.  The methods are implemented in the open-source
+BNNR library on top of \texttt{pytorch-grad-cam}, with a saliency cache that
+makes their online use practical.
+
+The present paper introduces the methods and their rationale; it makes no
+empirical claim about their effect on accuracy.  The natural next step is a
+controlled comparison of ICD and AICD against RandAugment, TrivialAugment,
+AutoAugment, and random masking, under matched compute and a held-out test
+split.  That comparison, together with the saliency measurements proposed in
+Section~\ref{sec:discussion:saliency}, would test whether the methods reshape the
+model's attention as their design intends.  We report that study separately.
+Further directions include adapting the tile size to object scale, refreshing
+the saliency cache on a schedule, substituting alternative class activation
+methods for GradCAM, and extending the tile-scoring construction beyond
+classification to detection and segmentation.

@@ -1,0 +1,71 @@
+\section{Implementation}
+\label{sec:implementation}
+
+ICD and AICD are implemented in the open-source BNNR
+library~\citep{walo2026bnnr} (MIT licensed, available on PyPI as
+\texttt{bnnr}).  The saliency back end is the
+\texttt{pytorch-grad-cam} package~\citep{gildenblat2021gradcam}, so the maps of
+Eq.~\eqref{eq:gradcam} come from a standard, widely used GradCAM implementation
+rather than a bespoke one; by default the library enables that package's
+eigen-smoothing option, as noted in Section~\ref{sec:method:saliency}.  This
+section describes how the methods are applied during training.
+
+\subsection{Online application and the saliency cache}
+\label{sec:implementation:cache}
+
+Because the saliency map depends on the current parameters, a naive
+implementation would run a GradCAM pass for every image at every step, roughly
+doubling the cost of training.  BNNR amortises this with a disk-backed cache.
+Before a training run (or after a warm-up phase, as discussed in
+Section~\ref{sec:discussion:limits}), the saliency map for each training image
+is computed once and stored, keyed by a hash of the image content:
+\begin{verbatim}
+    from bnnr.xai_cache import XAICache
+    cache = XAICache("./xai_cache")
+    cache.precompute_cache(
+        model=model,
+        train_loader=train_loader,   # yields (image, label, index)
+        target_layers=target_layers, # e.g. [model.layer4[-1]]
+        n_samples=len(train_dataset),
+        method="gradcam",
+    )
+\end{verbatim}
+During training the augmentations read tile masks from the cache instead of
+recomputing GradCAM, reducing the per-step overhead to a cache lookup and the
+masking arithmetic of Eqs.~\eqref{eq:tilescore}--\eqref{eq:fill}.  The cache
+reflects the model at the time of precomputation; refreshing it periodically
+trades additional compute for saliency that tracks the evolving model more
+closely.
+
+\subsection{Use in a training loop}
+\label{sec:implementation:loop}
+
+The augmentations are plain callables that take a batch and its labels.  A
+classification step looks as follows:
+\begin{verbatim}
+    from bnnr.icd import ICD, AICD
+    icd  = ICD(model=model,  target_layers=target_layers,
+               cache=cache,  threshold_percentile=70.0,
+               tile_size=8,  fill_strategy="gaussian_blur",
+               probability=0.5)
+    aicd = AICD(model=model, target_layers=target_layers,
+                cache=cache, threshold_percentile=70.0)
+
+    for images, labels, index in train_loader:   # images uint8 NHWC
+        images = icd.apply_batch_with_labels(
+            images, labels, sample_indices=index)
+        # ... convert to [0,1] BCHW, forward, backward, step ...
+\end{verbatim}
+The label passed to the augmentation is the class whose saliency defines the
+mask; by default this is the ground-truth label, though the model's prediction
+may be used instead.  The \texttt{DataLoader} yields a sample index as a third
+element so the cache can retrieve the correct precomputed map.  Images are
+expected in $[0,1]$ (or uint8, converted internally); ImageNet normalisation, if
+used, is applied after the augmentation so that the saliency back end and the
+fill operate on unnormalised pixels.
+
+ICD and AICD are independent augmentations and need not be used together.  Each
+can be inserted into any existing PyTorch loop, including framework wrappers such
+as Lightning, without further dependencies, and either can be composed
+with conventional augmentations (random crop, flip, colour jitter) applied
+before or after the masking step.

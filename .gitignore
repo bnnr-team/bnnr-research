@@ -1,0 +1,14 @@
+# LaTeX build artifacts (the compiled paper/main.pdf is tracked)
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# Python
+__pycache__/
+*.pyc

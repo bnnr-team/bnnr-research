@@ -1,0 +1,69 @@
+\section{Introduction}
+\label{sec:intro}
+
+Convolutional neural networks trained on natural image datasets develop
+systematic biases toward low-level texture features over global
+shape~\citep{geirhos2019texture}.  On fine-grained datasets the effect is
+pronounced: classifiers readily latch onto contextual cues such as the grass
+behind a terrier, the greenhouse behind a flower, or the sky behind an
+aircraft.  These correlations hold in the training distribution and can yield
+high validation accuracy, yet they transfer poorly to images where the shortcut
+is absent and leave the model brittle under distribution shift.
+
+Data augmentation is the standard remedy.  The prevailing approach applies a
+fixed family of photometric and geometric transformations uniformly throughout
+training.  AutoAugment~\citep{cubuk2019autoaugment} and its descendants,
+RandAugment~\citep{cubuk2020randaugment} and
+TrivialAugment~\citep{muller2021trivialaugment}, search over large
+transformation spaces but treat the network as a black box: the policy is fixed
+before training and never consults the model's internal state.  Spatial-masking
+regularisers such as Cutout~\citep{devries2017cutout} and Random
+Erasing~\citep{zhong2020randomerasing} remove rectangular regions to discourage
+reliance on any single patch, but the location of the mask is chosen uniformly
+at random.  A random mask is blind to content; it deletes empty background as
+often as it deletes the object.
+
+This raises a natural question.  If a saliency method can tell us which regions
+the model currently treats as discriminative, can we place the mask there
+deliberately?  KeepAugment~\citep{gong2021keepaugment} explores one side of
+this idea by \emph{protecting} high-saliency regions from augmentation, on the
+premise that preserving informative content helps accuracy.  We examine the
+complementary operations.  What happens when the high-saliency regions are
+\emph{removed}, forcing the classifier to find evidence elsewhere?  And what
+happens when only the low-saliency regions, the background and irrelevant
+texture, are removed, concentrating the perturbation away from the object?
+
+We formalise both operations as augmentation methods.  \textbf{Intelligent
+Coarse Dropout (ICD)} masks the highest-saliency tiles of each input;
+\textbf{Anti-ICD (AICD)} masks the lowest-saliency tiles.  Both derive their
+masks from a GradCAM~\citep{selvaraju2017gradcam} saliency map evaluated at the
+model's current parameters, so the augmentation tracks what the model has
+learned at each stage of training.  Crucially, the masking decision is made at
+the level of coarse tiles rather than individual pixels: the image is divided
+into an $8\times 8$-pixel grid (by default), each tile is scored by its mean
+saliency, and tiles are masked by a percentile threshold.  Coarse tiling makes
+the mask robust to the high-frequency noise that pixel-level saliency maps
+often exhibit, while keeping the masked region spatially coherent.  Rather than
+a hard black rectangle, masked tiles are filled with a soft strategy: a blurred
+copy of the original, a local or global mean colour, matched noise, or a
+constant.  The surrounding context then degrades gracefully.
+
+The contributions of this paper are as follows.
+\begin{enumerate}
+  \item We introduce ICD and AICD, two saliency-conditioned coarse-dropout
+    augmentations, and give the formal tile-based mask construction together
+    with the percentile-threshold rule that distinguishes them.
+  \item We describe five fill strategies for masked tiles and characterise how
+    each alters the information that remains available to the model.
+  \item We discuss the methods' expected behaviour in terms of curriculum
+    learning and spurious-correlation removal, and situate them with respect to
+    random masking and saliency-protecting augmentation.
+  \item We document a reference implementation in the open-source BNNR
+    library~\citep{walo2026bnnr}, including the use of a precomputed saliency
+    cache that makes online application practical.
+\end{enumerate}
+
+This paper is concerned with the methods themselves.  A controlled empirical
+comparison of ICD and AICD against RandAugment, TrivialAugment, and AutoAugment,
+together with the accompanying benchmark protocol, is the subject of a separate
+study.

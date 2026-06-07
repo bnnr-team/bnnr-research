@@ -1,0 +1,28 @@
+Visual classifiers trained with standard augmentation pipelines tend to exploit
+spurious correlations: background statistics, texture patterns, or scene-level
+cues that happen to co-occur with class labels but do not reflect object
+structure.  Conventional augmentation strategies, including random crops, colour
+jitter, and policy-based methods such as RandAugment and AutoAugment, are
+constructed without reference to what the model has actually learned, and so
+offer no mechanism for targeting the specific shortcuts a given classifier has
+acquired.
+
+We present Intelligent Coarse Dropout (\textbf{ICD}) and its complement
+Anti-ICD (\textbf{AICD}), two data augmentation methods that condition spatial
+masking on the model's own class activation maps.  Standard coarse dropout
+(cutout) hides rectangular regions chosen at random, erasing background as
+readily as object.  ICD and AICD make this saliency-aware: they split the image
+into a grid of tiles, score each tile by its mean saliency, and selectively
+mask tiles by a percentile threshold.  ICD masks the highest-saliency
+tiles, the regions the model already relies on, so that the classifier must
+recruit additional cues.  AICD masks the lowest-saliency tiles, perturbing the
+background while leaving the discriminative region intact.  Masked tiles are
+not filled with a hard black box but with one of several soft strategies
+(blurred original, local mean, noise, or a constant), which preserve different
+aspects of local context.
+
+We describe the formal construction of both masks, the family of fill
+strategies, the role of the tile size and threshold hyperparameters, and a
+reference implementation in the open-source BNNR library.  This paper
+introduces the methods; a quantitative evaluation against standard augmentation
+baselines is left to a companion study.
