@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+title: "Intelligent Coarse Dropout and Anti-ICD: Saliency-Guided Masking Augmentation for Visual Classifiers"
+message: "If you use ICD or AICD, please cite this paper."
+type: article
+authors:
+  - family-names: Walo
+    given-names: Mateusz
+doi: 10.5281/zenodo.20581077
+url: "https://doi.org/10.5281/zenodo.20581077"
+year: 2026
+license: CC-BY-4.0
+repository-code: "https://github.com/bnnr-team/bnnr-research"
+related-resources:
+  - type: software
+    title: "BNNR (Bulletproof Neural Network Recipe)"
+    url: "https://doi.org/10.5281/zenodo.20581372"

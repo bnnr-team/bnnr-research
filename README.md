@@ -12,6 +12,12 @@ The paper presents the methods, the tile-based mask construction, the fill
 strategies, and the reference implementation. It makes no empirical claims;
 a quantitative evaluation is left to a companion study.
 
+**Published:** [Zenodo](https://zenodo.org/records/20581077) · DOI [10.5281/zenodo.20581077](https://doi.org/10.5281/zenodo.20581077) · [Papers With Code](https://paperswithcode.co/paper/95141)
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20581077.svg)](https://doi.org/10.5281/zenodo.20581077)
+
+Reference implementation: [bnnr](https://github.com/bnnr-team/bnnr) · LaTeX sources: [`paper/`](paper/)
+
 **Build the PDF:**
 
 ```bash
